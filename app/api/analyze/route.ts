@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 
 export const maxDuration = 60;
 
@@ -30,26 +29,69 @@ Scoring guide:
 Be honest, specific, and reference actual elements visible in the screenshot. Avoid generic feedback.`;
 
 async function getScreenshot(url: string): Promise<string> {
-  // Use Microlink API for screenshots
   const apiUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&screenshot.width=1280&screenshot.height=800&screenshot.type=png`;
 
   const response = await fetch(apiUrl, { signal: AbortSignal.timeout(20000) });
 
   if (!response.ok) {
-    throw new Error("Failed to capture screenshot");
+    throw new Error(`Microlink returned ${response.status}`);
   }
 
   const data = await response.json();
   const screenshotUrl = data?.data?.screenshot?.url;
 
   if (!screenshotUrl) {
-    throw new Error("No screenshot returned");
+    throw new Error("No screenshot URL in response");
   }
 
-  // Fetch the actual image
   const imgResponse = await fetch(screenshotUrl);
   const buffer = await imgResponse.arrayBuffer();
   return Buffer.from(buffer).toString("base64");
+}
+
+async function analyzeWithClaude(screenshotBase64: string): Promise<string> {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": process.env.ANTHROPIC_API_KEY!,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1024,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: "image/png",
+                data: screenshotBase64,
+              },
+            },
+            {
+              type: "text",
+              text: ANALYSIS_PROMPT,
+            },
+          ],
+        },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Claude API ${response.status}: ${errorBody}`);
+  }
+
+  const data = await response.json();
+  const textBlock = data.content?.find(
+    (b: { type: string }) => b.type === "text"
+  );
+  return textBlock?.text || "";
 }
 
 export async function POST(request: NextRequest) {
@@ -75,7 +117,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
     }
 
-    // Get screenshot
+    // Step 1: Screenshot
     let screenshotBase64: string;
     try {
       screenshotBase64 = await getScreenshot(parsedUrl.toString());
@@ -87,40 +129,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Analyze with Claude
-    const anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
+    // Step 2: Claude analysis
+    let responseText: string;
+    try {
+      responseText = await analyzeWithClaude(screenshotBase64);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      return NextResponse.json(
+        { error: `Analysis failed: ${msg}` },
+        { status: 500 }
+      );
+    }
 
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: "image/png",
-                data: screenshotBase64,
-              },
-            },
-            {
-              type: "text",
-              text: ANALYSIS_PROMPT,
-            },
-          ],
-        },
-      ],
-    });
-
-    // Extract JSON from response
-    const responseText =
-      message.content[0].type === "text" ? message.content[0].text : "";
-
-    // Parse JSON - handle potential markdown wrapping
+    // Step 3: Parse JSON
     let jsonStr = responseText.trim();
     if (jsonStr.startsWith("```")) {
       jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
