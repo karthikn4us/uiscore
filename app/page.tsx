@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { track } from "@vercel/analytics";
 import type { AnalysisResult, AppState } from "@/lib/types";
 import { CATEGORY_META } from "@/lib/types";
 
@@ -328,6 +329,10 @@ export default function Home() {
 
       setResults(data);
       setState("results");
+      track("analysis_completed", {
+        url: url.trim().replace(/https?:\/\//, "").split("/")[0],
+        score: data.overall,
+      });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Something went wrong"
@@ -364,6 +369,7 @@ export default function Home() {
   };
 
   const downloadScorecard = async () => {
+    track("scorecard_downloaded");
     const dataUrl = await generateScorecardImage();
     if (!dataUrl) return;
     const link = document.createElement("a");
@@ -448,6 +454,7 @@ export default function Home() {
   };
 
   const copyPrompt = async () => {
+    track("prompt_copied");
     const prompt = generatePrompt();
     await navigator.clipboard.writeText(prompt);
     setPromptCopied(true);
