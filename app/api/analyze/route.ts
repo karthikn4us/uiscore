@@ -3,10 +3,6 @@ import Anthropic from "@anthropic-ai/sdk";
 
 export const maxDuration = 60;
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
 const ANALYSIS_PROMPT = `Analyze this website screenshot as a senior UI/UX designer. Score each category from 0 to 20 and provide exactly 2 specific, actionable feedback items per category.
 
 Return ONLY valid JSON with this exact structure (no markdown, no explanation):
@@ -64,6 +60,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "URL is required" }, { status: 400 });
     }
 
+    if (!process.env.ANTHROPIC_API_KEY) {
+      return NextResponse.json(
+        { error: "API key not configured" },
+        { status: 500 }
+      );
+    }
+
     // Validate URL
     let parsedUrl: URL;
     try {
@@ -73,11 +76,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Get screenshot
-    const screenshotBase64 = await getScreenshot(parsedUrl.toString());
+    let screenshotBase64: string;
+    try {
+      screenshotBase64 = await getScreenshot(parsedUrl.toString());
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      return NextResponse.json(
+        { error: `Screenshot failed: ${msg}` },
+        { status: 500 }
+      );
+    }
 
     // Analyze with Claude
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+    });
+
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 1024,
       messages: [
         {
