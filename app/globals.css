@@ -11,11 +11,13 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4);
+  background: linear-gradient(135deg, #a855f7 0%, #6366f1 40%, #06b6d4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -32,12 +34,12 @@ body {
   inset: -1px;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4);
+  background: linear-gradient(135deg, #a855f7, #6366f1, #06b6d4);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  opacity: 0.5;
-  transition: opacity 0.3s;
+  opacity: 0.4;
+  transition: opacity 0.3s ease;
   pointer-events: none;
 }
 
@@ -47,22 +49,20 @@ body {
 
 /* Score ring animation */
 .score-ring-circle {
-  transition: stroke-dashoffset 1.2s ease-out;
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Background grid pattern */
+/* Background grid - subtle dot pattern */
 .bg-grid {
-  background-image: radial-gradient(circle, #27272a 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-image: radial-gradient(circle, rgba(63, 63, 70, 0.4) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
 /* Subtle background glow */
 .bg-glow {
-  background: radial-gradient(
-    ellipse 80% 60% at 50% 0%,
-    rgba(99, 102, 241, 0.08) 0%,
-    transparent 70%
-  );
+  background:
+    radial-gradient(ellipse 60% 50% at 50% -5%, rgba(139, 92, 246, 0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 80% 10%, rgba(6, 182, 212, 0.04) 0%, transparent 60%);
 }
 
 /* Progress bar shimmer */
@@ -83,14 +83,33 @@ body {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.06) 50%,
     transparent 100%
   );
   animation: shimmer 2s infinite;
 }
 
-/* Scorecard export styles */
-.scorecard-export {
-  background: #09090b;
-  padding: 2rem;
+/* Selection color */
+::selection {
+  background: rgba(139, 92, 246, 0.3);
+  color: #fafafa;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
 }

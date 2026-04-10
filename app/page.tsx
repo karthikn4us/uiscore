@@ -446,8 +446,11 @@ export default function Home() {
         {state === "results" && (
           <button
             onClick={reset}
-            className="text-sm text-zinc-400 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-zinc-800/60"
           >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+            </svg>
             Score another
           </button>
         )}
@@ -457,21 +460,20 @@ export default function Home() {
         {/* ============ IDLE STATE ============ */}
         {state === "idle" && (
           <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
-            <div className="mb-8 animate-fade-in">
-              <h1 className="text-5xl sm:text-7xl font-bold tracking-tight mb-4">
+            <div className="mb-10 animate-fade-in">
+              <h1 className="text-5xl sm:text-7xl font-bold tracking-tight mb-5">
                 Score Your{" "}
                 <span className="gradient-text">UI</span>
               </h1>
-              <p className="text-lg text-zinc-400 max-w-md mx-auto">
-                Instant AI-powered design feedback. Paste a URL and get scored
-                on typography, color, spacing, layout, and polish.
+              <p className="text-lg sm:text-xl text-zinc-400 max-w-lg mx-auto leading-relaxed">
+                AI-powered design feedback in seconds.
               </p>
             </div>
 
             {/* URL Input */}
             <div className="w-full max-w-xl glow-border rounded-2xl animate-fade-in" style={{ animationDelay: "200ms" }}>
               <div className="flex items-center bg-zinc-900 rounded-2xl">
-                <div className="pl-5 text-zinc-500">
+                <div className="pl-4 sm:pl-5 text-zinc-500 shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
                   </svg>
@@ -482,13 +484,13 @@ export default function Home() {
                   onChange={(e) => setUrl(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Enter any website URL..."
-                  className="flex-1 bg-transparent px-4 py-4 text-white placeholder:text-zinc-500 focus:outline-none text-lg"
+                  className="flex-1 min-w-0 bg-transparent px-3 sm:px-4 py-4 text-white placeholder:text-zinc-500 focus:outline-none text-base sm:text-lg"
                   autoFocus
                 />
                 <button
                   onClick={analyze}
                   disabled={!url.trim()}
-                  className="mr-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-cyan-400 text-white font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="mr-2 shrink-0 px-5 sm:px-6 py-2.5 rounded-xl bg-white text-zinc-900 font-semibold text-sm hover:bg-zinc-200 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
                 >
                   Score
                 </button>
@@ -497,19 +499,25 @@ export default function Home() {
 
             {/* How it works */}
             <div
-              className="flex gap-8 mt-16 text-sm text-zinc-500 animate-fade-in"
+              className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mt-14 animate-fade-in"
               style={{ animationDelay: "400ms" }}
             >
               {[
-                { step: "1", text: "Paste any URL" },
-                { step: "2", text: "AI analyzes the design" },
-                { step: "3", text: "Get your score & feedback" },
-              ].map((item) => (
-                <div key={item.step} className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-xs text-zinc-400">
+                { step: "1", label: "Paste a URL", desc: "Any live website" },
+                { step: "2", label: "AI analyzes", desc: "5 design categories" },
+                { step: "3", label: "Get your score", desc: "With actionable fixes" },
+              ].map((item, i) => (
+                <div key={item.step} className="flex items-center gap-3">
+                  {i > 0 && (
+                    <div className="hidden sm:block w-8 h-px bg-zinc-800 -ml-3 mr-0" />
+                  )}
+                  <span className="w-7 h-7 rounded-full bg-zinc-800/80 border border-zinc-700/50 flex items-center justify-center text-xs font-medium text-zinc-400">
                     {item.step}
                   </span>
-                  {item.text}
+                  <div className="text-left">
+                    <div className="text-sm font-medium text-zinc-300">{item.label}</div>
+                    <div className="text-xs text-zinc-600">{item.desc}</div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -552,16 +560,18 @@ export default function Home() {
         {/* ============ ERROR STATE ============ */}
         {state === "error" && (
           <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
-            <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-6">
-              <span className="text-3xl">!</span>
+            <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-5">
+              <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
             </div>
-            <h2 className="text-xl font-semibold mb-2">Analysis Failed</h2>
-            <p className="text-zinc-400 mb-6 max-w-md">{error}</p>
+            <h2 className="text-lg font-semibold mb-2">Couldn&apos;t analyze that URL</h2>
+            <p className="text-sm text-zinc-500 mb-6 max-w-sm">{error}</p>
             <button
               onClick={reset}
-              className="px-6 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-sm transition-colors"
+              className="px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-sm transition-colors"
             >
-              Try Again
+              Try another URL
             </button>
           </div>
         )}
@@ -573,12 +583,12 @@ export default function Home() {
             <ShareCard results={results} siteUrl={url} cardRef={shareCardRef} />
 
             {/* Score header */}
-            <div className="text-center mt-8 mb-12 animate-fade-in">
-              <p className="text-sm text-zinc-500 font-mono mb-6">
+            <div className="text-center mt-8 mb-10 animate-fade-in">
+              <p className="text-xs tracking-widest uppercase text-zinc-500 font-mono mb-6">
                 {url.replace(/https?:\/\//, "").split("/")[0]}
               </p>
               <ScoreRing score={results.overall} animated={animated} />
-              <p className="text-zinc-400 mt-6 max-w-lg mx-auto text-lg">
+              <p className="text-zinc-400 mt-6 max-w-xl mx-auto text-base leading-relaxed">
                 {results.summary}
               </p>
             </div>
@@ -600,7 +610,7 @@ export default function Home() {
             </div>
 
             {/* Category breakdowns */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
               {Object.entries(results.categories).map(
                 ([name, data], idx) => (
                   <CategoryBar
@@ -652,31 +662,34 @@ export default function Home() {
             </div>
 
             {/* Share section */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-6 border-t border-zinc-800/50">
-              <button
-                onClick={downloadScorecard}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-sm transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                </svg>
-                Download Scorecard
-              </button>
-              <button
-                onClick={shareOnLinkedIn}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-medium text-sm transition-colors"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                </svg>
-                Share on LinkedIn
-              </button>
+            <div className="bg-zinc-900/40 border border-zinc-800/40 rounded-xl p-6 text-center">
+              <p className="text-sm text-zinc-500 mb-4">Share your results</p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button
+                  onClick={downloadScorecard}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-sm transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                  </svg>
+                  Download Scorecard
+                </button>
+                <button
+                  onClick={shareOnLinkedIn}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0A66C2] hover:bg-[#004182] text-white font-medium text-sm transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                  </svg>
+                  Share on LinkedIn
+                </button>
+              </div>
+              {shareStatus && (
+                <p className="text-sm text-purple-400 mt-3 animate-fade-in">
+                  {shareStatus}
+                </p>
+              )}
             </div>
-            {shareStatus && (
-              <p className="text-center text-sm text-purple-400 mt-4 animate-fade-in">
-                {shareStatus}
-              </p>
-            )}
           </div>
         )}
       </div>
