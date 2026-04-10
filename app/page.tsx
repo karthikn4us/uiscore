@@ -143,6 +143,137 @@ function CategoryBar({
   );
 }
 
+// --- Share Card (hidden, rendered to image for LinkedIn) ---
+function ShareCard({
+  results,
+  siteUrl,
+  cardRef,
+}: {
+  results: AnalysisResult;
+  siteUrl: string;
+  cardRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const color = getScoreColor(results.overall);
+  const hostname = siteUrl.replace(/https?:\/\//, "").split("/")[0];
+  const cats = Object.entries(results.categories);
+
+  return (
+    <div
+      ref={cardRef}
+      style={{
+        position: "absolute",
+        left: "-9999px",
+        top: 0,
+        width: 1200,
+        height: 630,
+        background: "linear-gradient(135deg, #09090b 0%, #18181b 50%, #09090b 100%)",
+        fontFamily: "Inter, system-ui, -apple-system, sans-serif",
+        color: "#fafafa",
+        display: "flex",
+        flexDirection: "column",
+        padding: "48px 56px",
+        overflow: "hidden",
+      }}
+    >
+      {/* Decorative gradient orb */}
+      <div
+        style={{
+          position: "absolute",
+          top: -100,
+          right: -100,
+          width: 400,
+          height: 400,
+          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%)",
+        }}
+      />
+
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 40 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+              background: "linear-gradient(135deg, #a855f7, #06b6d4)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 700,
+              fontSize: 16,
+            }}
+          >
+            UI
+          </div>
+          <span style={{ fontWeight: 600, fontSize: 22 }}>UIScore</span>
+        </div>
+        <span style={{ color: "#71717a", fontSize: 16, fontFamily: "monospace" }}>{hostname}</span>
+      </div>
+
+      {/* Main content */}
+      <div style={{ display: "flex", flex: 1, gap: 56 }}>
+        {/* Score ring area */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minWidth: 220 }}>
+          <svg viewBox="0 0 200 200" width="180" height="180">
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#27272a" strokeWidth="10" />
+            <circle
+              cx="100"
+              cy="100"
+              r="80"
+              fill="none"
+              stroke={color}
+              strokeWidth="10"
+              strokeLinecap="round"
+              strokeDasharray={2 * Math.PI * 80}
+              strokeDashoffset={2 * Math.PI * 80 - (results.overall / 100) * 2 * Math.PI * 80}
+              transform="rotate(-90 100 100)"
+            />
+            <text x="100" y="92" textAnchor="middle" dominantBaseline="central" fill={color} fontSize="56" fontWeight="700" fontFamily="Inter, system-ui, sans-serif">
+              {results.overall}
+            </text>
+            <text x="100" y="128" textAnchor="middle" fill="#a1a1aa" fontSize="16" fontFamily="Inter, system-ui, sans-serif">
+              {getScoreLabel(results.overall)}
+            </text>
+          </svg>
+        </div>
+
+        {/* Category bars */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 16 }}>
+          {cats.map(([name, data]) => {
+            const meta = CATEGORY_META[name];
+            const barColor = getScoreColor(data.score, 20);
+            const pct = (data.score / 20) * 100;
+            return (
+              <div key={name} style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                <span style={{ width: 110, fontSize: 15, color: "#d4d4d8", fontWeight: 500 }}>
+                  {meta.icon} {meta.label}
+                </span>
+                <div style={{ flex: 1, height: 10, backgroundColor: "#27272a", borderRadius: 5, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${pct}%`, backgroundColor: barColor, borderRadius: 5 }} />
+                </div>
+                <span style={{ width: 55, textAlign: "right", fontFamily: "monospace", fontWeight: 600, fontSize: 15, color: barColor }}>
+                  {data.score}/20
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Summary + CTA */}
+      <div style={{ borderTop: "1px solid #27272a", marginTop: 32, paddingTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <p style={{ color: "#a1a1aa", fontSize: 14, maxWidth: 700, lineHeight: 1.5, margin: 0 }}>
+          {results.summary}
+        </p>
+        <span style={{ color: "#a855f7", fontSize: 14, fontWeight: 600, whiteSpace: "nowrap" }}>
+          uiscore.vercel.app
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // --- Main Page ---
 export default function Home() {
   const [state, setState] = useState<AppState>("idle");
@@ -151,7 +282,9 @@ export default function Home() {
   const [error, setError] = useState("");
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0]);
   const [animated, setAnimated] = useState(false);
+  const [shareStatus, setShareStatus] = useState("");
   const scoreCardRef = useRef<HTMLDivElement>(null);
+  const shareCardRef = useRef<HTMLDivElement>(null);
 
   // Cycle loading messages
   useEffect(() => {
@@ -213,33 +346,54 @@ export default function Home() {
     setError("");
   };
 
-  const downloadScorecard = async () => {
-    if (!scoreCardRef.current) return;
+  const generateScorecardImage = async (): Promise<string | null> => {
+    if (!shareCardRef.current) return null;
     const { toPng } = await import("html-to-image");
     try {
-      const dataUrl = await toPng(scoreCardRef.current, {
+      return await toPng(shareCardRef.current, {
         quality: 0.95,
         pixelRatio: 2,
-        backgroundColor: "#09090b",
+        width: 1200,
+        height: 630,
       });
-      const link = document.createElement("a");
-      link.download = `uiscore-${
-        url.replace(/https?:\/\//, "").split("/")[0]
-      }.png`;
-      link.href = dataUrl;
-      link.click();
     } catch (err) {
       console.error("Failed to generate image:", err);
+      return null;
     }
   };
 
-  const shareOnLinkedIn = () => {
+  const downloadScorecard = async () => {
+    const dataUrl = await generateScorecardImage();
+    if (!dataUrl) return;
+    const link = document.createElement("a");
+    link.download = `uiscore-${url.replace(/https?:\/\//, "").split("/")[0]}.png`;
+    link.href = dataUrl;
+    link.click();
+  };
+
+  const shareOnLinkedIn = async () => {
     if (!results) return;
-    const text = `Just scored a website's design with UIScore and it got ${results.overall}/100!\n\n${results.summary}\n\nTry scoring your own: https://uiscore.vercel.app`;
+    setShareStatus("Generating scorecard...");
+
+    // Generate and download the image first
+    const dataUrl = await generateScorecardImage();
+    if (dataUrl) {
+      const link = document.createElement("a");
+      link.download = `uiscore-${url.replace(/https?:\/\//, "").split("/")[0]}.png`;
+      link.href = dataUrl;
+      link.click();
+    }
+
+    // Open LinkedIn compose
+    const hostname = url.replace(/https?:\/\//, "").split("/")[0];
+    const text = `I just scored ${hostname}'s design using UIScore and it got ${results.overall}/100!\n\n${results.summary}\n\nScore your own website's design: https://uiscore.vercel.app`;
     window.open(
       `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text)}`,
       "_blank"
     );
+
+    setShareStatus("Scorecard downloaded! Attach it to your LinkedIn post.");
+    setTimeout(() => setShareStatus(""), 5000);
   };
 
   return (
@@ -379,7 +533,10 @@ export default function Home() {
 
         {/* ============ RESULTS STATE ============ */}
         {state === "results" && results && (
-          <div ref={scoreCardRef}>
+          <div>
+            {/* Hidden share card for image generation */}
+            <ShareCard results={results} siteUrl={url} cardRef={shareCardRef} />
+
             {/* Score header */}
             <div className="text-center mt-8 mb-12 animate-fade-in">
               <p className="text-sm text-zinc-500 font-mono mb-6">
@@ -444,6 +601,11 @@ export default function Home() {
                 Share on LinkedIn
               </button>
             </div>
+            {shareStatus && (
+              <p className="text-center text-sm text-purple-400 mt-4 animate-fade-in">
+                {shareStatus}
+              </p>
+            )}
           </div>
         )}
       </div>
