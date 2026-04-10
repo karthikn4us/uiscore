@@ -685,14 +685,13 @@ export default function Home() {
       <footer className="text-center py-6 text-xs text-zinc-600">
         Built by{" "}
         <a
-          href="https://linkedin.com/in/karthikn"
+          href="https://www.linkedin.com/in/karthiknaralasetty/"
           target="_blank"
           rel="noopener noreferrer"
           className="text-zinc-400 hover:text-white transition-colors"
         >
-          Karthik
-        </a>{" "}
-        - Powered by Claude AI
+          Karthik Naralasetty
+        </a>
       </footer>
     </main>
   );
