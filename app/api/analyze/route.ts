@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { kv } from "@vercel/kv";
 
 export const maxDuration = 60;
 
@@ -163,6 +164,23 @@ export async function POST(request: NextRequest) {
       }
     }
     analysis.overall = total;
+
+    // Save to leaderboard (fire-and-forget, don't block response)
+    const hostname = parsedUrl.hostname.replace(/^www\./, "");
+    try {
+      await kv.zadd("leaderboard", { score: total, member: hostname });
+      await kv.set(`score:${hostname}`, {
+        hostname,
+        overall: total,
+        categories: analysis.categories,
+        summary: analysis.summary,
+        topStrength: analysis.topStrength,
+        topImprovement: analysis.topImprovement,
+        scoredAt: new Date().toISOString(),
+      });
+    } catch {
+      // KV not configured - silently continue
+    }
 
     return NextResponse.json(analysis);
   } catch (error) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Link from "next/link";
 import { track } from "@vercel/analytics";
 import type { AnalysisResult, AppState } from "@/lib/types";
 import { CATEGORY_META } from "@/lib/types";
@@ -473,17 +474,25 @@ export default function Home() {
             UIScore
           </span>
         </button>
-        {state === "results" && (
-          <button
-            onClick={reset}
-            className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-zinc-800/60"
+        <div className="flex items-center gap-3">
+          <Link
+            href="/leaderboard"
+            className="text-sm text-zinc-500 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-zinc-800/60"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
-            </svg>
-            Score another
-          </button>
-        )}
+            Leaderboard
+          </Link>
+          {state === "results" && (
+            <button
+              onClick={reset}
+              className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-zinc-800/60"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+              </svg>
+              Score another
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="max-w-5xl mx-auto px-6 pb-20">
