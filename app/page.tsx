@@ -460,18 +460,18 @@ export default function Home() {
         {/* ============ IDLE STATE ============ */}
         {state === "idle" && (
           <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
-            <div className="mb-10 animate-fade-in">
-              <h1 className="text-5xl sm:text-7xl font-bold tracking-tight mb-5">
+            <div className="mb-10">
+              <h1 className="text-5xl sm:text-7xl font-bold tracking-tight mb-5 opacity-0 animate-slide-up" style={{ animationDelay: "0ms", animationFillMode: "forwards" }}>
                 Score Your{" "}
                 <span className="gradient-text">UI</span>
               </h1>
-              <p className="text-lg sm:text-xl text-zinc-400 max-w-lg mx-auto leading-relaxed">
+              <p className="text-lg sm:text-xl text-zinc-400 max-w-lg mx-auto leading-relaxed opacity-0 animate-slide-up" style={{ animationDelay: "120ms", animationFillMode: "forwards" }}>
                 AI-powered design feedback in seconds.
               </p>
             </div>
 
             {/* URL Input */}
-            <div className="w-full max-w-xl glow-border rounded-2xl animate-fade-in" style={{ animationDelay: "200ms" }}>
+            <div className="w-full max-w-xl glow-border rounded-2xl opacity-0 animate-slide-up" style={{ animationDelay: "240ms", animationFillMode: "forwards" }}>
               <div className="flex items-center bg-zinc-900 rounded-2xl">
                 <div className="pl-4 sm:pl-5 text-zinc-500 shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -490,7 +490,7 @@ export default function Home() {
                 <button
                   onClick={analyze}
                   disabled={!url.trim()}
-                  className="mr-2 shrink-0 px-5 sm:px-6 py-2.5 rounded-xl bg-white text-zinc-900 font-semibold text-sm hover:bg-zinc-200 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
+                  className="mr-2 shrink-0 px-5 sm:px-6 py-2.5 rounded-xl bg-white text-zinc-900 font-semibold text-sm transition-all duration-200 hover:bg-zinc-100 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   Score
                 </button>
@@ -499,8 +499,8 @@ export default function Home() {
 
             {/* How it works */}
             <div
-              className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mt-14 animate-fade-in"
-              style={{ animationDelay: "400ms" }}
+              className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mt-14 opacity-0 animate-slide-up"
+              style={{ animationDelay: "450ms", animationFillMode: "forwards" }}
             >
               {[
                 { step: "1", label: "Paste a URL", desc: "Any live website" },
