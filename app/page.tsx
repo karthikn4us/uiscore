@@ -376,18 +376,41 @@ export default function Home() {
     if (!results) return;
     setShareStatus("Generating scorecard...");
 
-    // Generate and download the image first
+    const hostname = url.replace(/https?:\/\//, "").split("/")[0];
+    const text = `I just scored ${hostname}'s design using UIScore and it got ${results.overall}/100!\n\n${results.summary}\n\nScore your own website's design: https://uiscore.vercel.app`;
+
+    // Generate the scorecard image
     const dataUrl = await generateScorecardImage();
+
+    // Try Web Share API first (shares image directly to LinkedIn/any app)
+    if (dataUrl && navigator.share) {
+      try {
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], `uiscore-${hostname}.png`, { type: "image/png" });
+
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ text, files: [file] });
+          setShareStatus("");
+          return;
+        }
+      } catch (err) {
+        // User cancelled or share failed - fall through to fallback
+        if ((err as Error)?.name === "AbortError") {
+          setShareStatus("");
+          return;
+        }
+      }
+    }
+
+    // Fallback: download image + open LinkedIn compose
     if (dataUrl) {
       const link = document.createElement("a");
-      link.download = `uiscore-${url.replace(/https?:\/\//, "").split("/")[0]}.png`;
+      link.download = `uiscore-${hostname}.png`;
       link.href = dataUrl;
       link.click();
     }
 
-    // Open LinkedIn compose
-    const hostname = url.replace(/https?:\/\//, "").split("/")[0];
-    const text = `I just scored ${hostname}'s design using UIScore and it got ${results.overall}/100!\n\n${results.summary}\n\nScore your own website's design: https://uiscore.vercel.app`;
     window.open(
       `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text)}`,
       "_blank"
