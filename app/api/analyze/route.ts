@@ -29,9 +29,10 @@ Scoring guide:
 Be honest, specific, and reference actual elements visible in the screenshot. Avoid generic feedback.`;
 
 async function getScreenshot(url: string): Promise<string> {
-  const apiUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&screenshot.width=1280&screenshot.height=800&screenshot.type=png`;
+  // waitForTimeout gives SPAs time to render; waitUntil=networkidle0 waits for no pending requests
+  const apiUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&screenshot.width=1280&screenshot.height=800&screenshot.type=png&waitForTimeout=5000&waitUntil=networkidle0`;
 
-  const response = await fetch(apiUrl, { signal: AbortSignal.timeout(20000) });
+  const response = await fetch(apiUrl, { signal: AbortSignal.timeout(30000) });
 
   if (!response.ok) {
     throw new Error(`Microlink returned ${response.status}`);
