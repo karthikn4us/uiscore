@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #09090b;
+  --foreground: #fafafa;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glowing input border */
+.glow-border {
+  position: relative;
+}
+
+.glow-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, #a855f7, #3b82f6, #06b6d4);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.5;
+  transition: opacity 0.3s;
+}
+
+.glow-border:focus-within::before {
+  opacity: 1;
+}
+
+/* Score ring animation */
+.score-ring-circle {
+  transition: stroke-dashoffset 1.2s ease-out;
+}
+
+/* Background grid pattern */
+.bg-grid {
+  background-image: radial-gradient(circle, #27272a 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Subtle background glow */
+.bg-glow {
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 0%,
+    rgba(99, 102, 241, 0.08) 0%,
+    transparent 70%
+  );
+}
+
+/* Progress bar shimmer */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.shimmer {
+  overflow: hidden;
+  position: relative;
+}
+
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+  animation: shimmer 2s infinite;
+}
+
+/* Scorecard export styles */
+.scorecard-export {
+  background: #09090b;
+  padding: 2rem;
+}
