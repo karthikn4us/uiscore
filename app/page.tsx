@@ -283,6 +283,7 @@ export default function Home() {
   const [loadingMsg, setLoadingMsg] = useState(LOADING_MESSAGES[0]);
   const [animated, setAnimated] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
+  const [promptCopied, setPromptCopied] = useState(false);
   const scoreCardRef = useRef<HTMLDivElement>(null);
   const shareCardRef = useRef<HTMLDivElement>(null);
 
@@ -394,6 +395,40 @@ export default function Home() {
 
     setShareStatus("Scorecard downloaded! Attach it to your LinkedIn post.");
     setTimeout(() => setShareStatus(""), 5000);
+  };
+
+  const generatePrompt = (): string => {
+    if (!results) return "";
+    const hostname = url.replace(/https?:\/\//, "").split("/")[0];
+    const lines = [`Improve the UI/UX of ${hostname} based on this design audit (scored ${results.overall}/100).`, ""];
+    lines.push(`Summary: ${results.summary}`, "");
+    lines.push("Fix the following issues by priority:", "");
+
+    // Sort categories by score ascending (worst first)
+    const sorted = Object.entries(results.categories).sort(
+      ([, a], [, b]) => a.score - b.score
+    );
+
+    for (const [name, data] of sorted) {
+      const meta = CATEGORY_META[name];
+      lines.push(`## ${meta.label} (${data.score}/20)`);
+      for (const fb of data.feedback) {
+        lines.push(`- ${fb}`);
+      }
+      lines.push("");
+    }
+
+    lines.push(
+      "For each fix, edit the relevant CSS/HTML files directly. Focus on the highest-impact changes first. Do not refactor unrelated code."
+    );
+    return lines.join("\n");
+  };
+
+  const copyPrompt = async () => {
+    const prompt = generatePrompt();
+    await navigator.clipboard.writeText(prompt);
+    setPromptCopied(true);
+    setTimeout(() => setPromptCopied(false), 2000);
   };
 
   return (
@@ -578,6 +613,42 @@ export default function Home() {
                   />
                 )
               )}
+            </div>
+
+            {/* Claude Code prompt */}
+            <div className="bg-zinc-900/60 border border-zinc-800/60 rounded-xl p-5 mb-10 opacity-0 animate-slide-up" style={{ animationDelay: "900ms", animationFillMode: "forwards" }}>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">&#9002;</span>
+                  <span className="font-medium text-zinc-200">Fix with Claude Code</span>
+                </div>
+                <button
+                  onClick={copyPrompt}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-300 transition-colors"
+                >
+                  {promptCopied ? (
+                    <>
+                      <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9.75a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                      </svg>
+                      Copy prompt
+                    </>
+                  )}
+                </button>
+              </div>
+              <p className="text-xs text-zinc-500 mb-3">
+                Paste this into Claude Code to automatically fix these design issues.
+              </p>
+              <pre className="text-xs text-zinc-400 bg-zinc-950/80 rounded-lg p-4 overflow-x-auto max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed font-mono">
+                {generatePrompt()}
+              </pre>
             </div>
 
             {/* Share section */}
