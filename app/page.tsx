@@ -204,7 +204,10 @@ export default function Home() {
     if (!shareCardRef.current) return null;
     const { toPng } = await import("html-to-image");
     try {
-      return await toPng(shareCardRef.current, { quality: 0.95, pixelRatio: 2, width: 1200, height: 630 });
+      return await Promise.race([
+        toPng(shareCardRef.current, { quality: 0.95, pixelRatio: 2, width: 1200, height: 630 }),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
+      ]);
     } catch (err) {
       console.error("Failed to generate image:", err);
       return null;
@@ -223,32 +226,29 @@ export default function Home() {
 
   const shareOnLinkedIn = async () => {
     if (!results) return;
-    setShareStatus("Generating scorecard...");
+
     const hostname = url.replace(/https?:\/\//, "").split("/")[0];
     const text = `I just scored ${hostname}'s design using UIScore and it got ${results.overall}/100!\n\n${results.summary}\n\nScore your own website's design: https://uiscore.vercel.app`;
-    const dataUrl = await generateScorecardImage();
-    if (dataUrl && navigator.share) {
-      try {
-        const res = await fetch(dataUrl);
-        const blob = await res.blob();
-        const file = new File([blob], `uiscore-${hostname}.png`, { type: "image/png" });
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ text, files: [file] });
-          setShareStatus("");
-          return;
-        }
-      } catch (err) {
-        if ((err as Error)?.name === "AbortError") { setShareStatus(""); return; }
-      }
-    }
-    if (dataUrl) {
-      const link = document.createElement("a");
-      link.download = `uiscore-${hostname}.png`;
-      link.href = dataUrl;
-      link.click();
-    }
+
+    // Open LinkedIn FIRST - must be synchronous with user click to avoid popup blocker
     window.open(`https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text)}`, "_blank");
-    setShareStatus("Scorecard downloaded! Attach it to your LinkedIn post.");
+
+    // Then generate and download the scorecard image in the background
+    setShareStatus("Downloading scorecard...");
+    try {
+      const dataUrl = await generateScorecardImage();
+      if (dataUrl) {
+        const link = document.createElement("a");
+        link.download = `uiscore-${hostname}.png`;
+        link.href = dataUrl;
+        link.click();
+        setShareStatus("Scorecard downloaded! Attach it to your LinkedIn post.");
+      } else {
+        setShareStatus("");
+      }
+    } catch {
+      setShareStatus("");
+    }
     setTimeout(() => setShareStatus(""), 5000);
   };
 
