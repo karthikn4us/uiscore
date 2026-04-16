@@ -450,6 +450,24 @@ export default function Home() {
     }
   };
 
+  // Convert data URL to blob, copy to clipboard, fallback to download
+  const copyImageToClipboard = async (dataUrl: string, fileName: string): Promise<boolean> => {
+    try {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const pngBlob = new Blob([blob], { type: "image/png" });
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": pngBlob })]);
+      return true;
+    } catch {
+      // Clipboard API not available or denied - fall back to download
+      const link = document.createElement("a");
+      link.download = fileName;
+      link.href = dataUrl;
+      link.click();
+      return false;
+    }
+  };
+
   const downloadScorecard = async () => {
     track("scorecard_downloaded");
     const dataUrl = await generateScorecardImage();
@@ -465,22 +483,22 @@ export default function Home() {
     const host = hostname(url);
     const text = `I just scored ${host}'s design using UIScore and it got ${results.overall}/100!\n\n${results.summary}\n\nScore your own website's design: https://uiscore.vercel.app`;
     window.open(`https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text)}`, "_blank");
-    setShareStatus("Downloading scorecard...");
+    setShareStatus("Generating scorecard...");
     try {
       const dataUrl = await generateScorecardImage();
       if (dataUrl) {
-        const link = document.createElement("a");
-        link.download = `uiscore-${host}.png`;
-        link.href = dataUrl;
-        link.click();
-        setShareStatus("Scorecard downloaded! Attach it to your LinkedIn post.");
+        const copied = await copyImageToClipboard(dataUrl, `uiscore-${host}.png`);
+        setShareStatus(copied
+          ? "Scorecard copied to clipboard! Paste (Ctrl+V) into your LinkedIn post."
+          : "Scorecard downloaded! Attach it to your LinkedIn post."
+        );
       } else {
         setShareStatus("");
       }
     } catch {
       setShareStatus("");
     }
-    setTimeout(() => setShareStatus(""), 5000);
+    setTimeout(() => setShareStatus(""), 8000);
   };
 
   const generateCompareImage = async (): Promise<string | null> => {
@@ -504,22 +522,22 @@ export default function Home() {
     const winner = compareResults.site1.overall >= compareResults.site2.overall ? h1 : h2;
     const text = `I compared ${h1} (${compareResults.site1.overall}/100) vs ${h2} (${compareResults.site2.overall}/100) on UIScore.\n\nWinner: ${winner}\n\nCompare any two websites: https://uiscore.vercel.app`;
     window.open(`https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text)}`, "_blank");
-    setShareStatus("Downloading comparison card...");
+    setShareStatus("Generating comparison card...");
     try {
       const dataUrl = await generateCompareImage();
       if (dataUrl) {
-        const link = document.createElement("a");
-        link.download = `uiscore-${h1}-vs-${h2}.png`;
-        link.href = dataUrl;
-        link.click();
-        setShareStatus("Comparison card downloaded! Attach it to your LinkedIn post.");
+        const copied = await copyImageToClipboard(dataUrl, `uiscore-${h1}-vs-${h2}.png`);
+        setShareStatus(copied
+          ? "Comparison card copied to clipboard! Paste (Ctrl+V) into your LinkedIn post."
+          : "Comparison card downloaded! Attach it to your LinkedIn post."
+        );
       } else {
         setShareStatus("");
       }
     } catch {
       setShareStatus("");
     }
-    setTimeout(() => setShareStatus(""), 5000);
+    setTimeout(() => setShareStatus(""), 8000);
   };
 
   const generatePrompt = (): string => {
