@@ -15,8 +15,15 @@ export interface AnalysisResult {
   summary: string;
   topStrength: string;
   topImprovement: string;
+  screenshotUrl?: string;
 }
 
+export interface CompareResult {
+  site1: AnalysisResult;
+  site2: AnalysisResult;
+}
+
+export type AppMode = "score" | "compare";
 export type AppState = "idle" | "loading" | "results" | "error";
 
 export const CATEGORY_META: Record<
