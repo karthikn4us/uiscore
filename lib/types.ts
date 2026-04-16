@@ -29,7 +29,6 @@ export interface AnalysisResult {
   screenshotUrl?: string;
   designSystem?: DesignSystem;
   cssFixes?: CssFix[];
-  fixedScreenshotUrl?: string;
 }
 
 export interface CompareResult {

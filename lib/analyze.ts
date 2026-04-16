@@ -1,4 +1,4 @@
-import type { AnalysisResult, CssFix } from "./types";
+import type { AnalysisResult } from "./types";
 
 export const ANALYSIS_PROMPT = `Analyze this website screenshot as a senior UI/UX designer. Score each category from 0 to 20 and provide exactly 2 specific, actionable feedback items per category. Also extract the visible design system tokens and generate CSS fixes.
 
@@ -86,27 +86,6 @@ export async function getScreenshot(url: string): Promise<ScreenshotResult> {
   return { base64, url: screenshotUrl };
 }
 
-/** Take a screenshot with CSS fixes injected via Microlink's styles param */
-export async function getFixedScreenshot(url: string, cssFixes: CssFix[]): Promise<string> {
-  const combinedCss = cssFixes.map((f) => f.css).join(" ");
-  const apiUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&screenshot.width=1280&screenshot.height=800&screenshot.type=png&waitForTimeout=5000&waitUntil=networkidle0&styles=${encodeURIComponent(combinedCss)}`;
-
-  const response = await fetch(apiUrl, { signal: AbortSignal.timeout(30000) });
-
-  if (!response.ok) {
-    throw new Error(`Microlink fixed screenshot returned ${response.status}`);
-  }
-
-  const data = await response.json();
-  const screenshotUrl = data?.data?.screenshot?.url;
-
-  if (!screenshotUrl) {
-    throw new Error("No fixed screenshot URL in response");
-  }
-
-  return screenshotUrl;
-}
-
 export async function analyzeWithClaude(screenshotBase64: string): Promise<string> {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -176,27 +155,10 @@ export function parseAndClampAnalysis(responseText: string): AnalysisResult {
   return analysis as AnalysisResult;
 }
 
-/** Full pipeline: screenshot -> Claude -> parsed result -> fixed screenshot */
+/** Full pipeline: screenshot -> Claude -> parsed result */
 export async function analyzeUrl(url: string): Promise<AnalysisResult & { screenshotUrl: string }> {
   const screenshot = await getScreenshot(url);
   const responseText = await analyzeWithClaude(screenshot.base64);
   const analysis = parseAndClampAnalysis(responseText);
-
-  const result: AnalysisResult & { screenshotUrl: string } = {
-    ...analysis,
-    screenshotUrl: screenshot.url,
-  };
-
-  // Generate "after" screenshot with CSS fixes injected
-  if (analysis.cssFixes && analysis.cssFixes.length > 0) {
-    try {
-      const fixedUrl = await getFixedScreenshot(url, analysis.cssFixes);
-      result.fixedScreenshotUrl = fixedUrl;
-    } catch (err) {
-      // Fixed screenshot failed - continue without it (graceful degradation)
-      console.error("Fixed screenshot failed:", err);
-    }
-  }
-
-  return result;
+  return { ...analysis, screenshotUrl: screenshot.url };
 }
