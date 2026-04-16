@@ -168,11 +168,11 @@ function CompareCategoryRow({ name, score1, score2, animated, delay }: {
   );
 }
 
-// --- Share Card (hidden, for LinkedIn image export) ---
+// --- Share Card: Score (hidden, for LinkedIn image export) ---
 function ShareCard({
-  results, siteUrl, cardRef,
+  results, siteUrl, screenshotBase64, cardRef,
 }: {
-  results: AnalysisResult; siteUrl: string; cardRef: React.RefObject<HTMLDivElement | null>;
+  results: AnalysisResult; siteUrl: string; screenshotBase64: string | null; cardRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const color = getScoreColor(results.overall);
   const host = hostname(siteUrl);
@@ -181,48 +181,134 @@ function ShareCard({
   return (
     <div ref={cardRef} style={{
       position: "absolute", left: "-9999px", top: 0, width: 1200, height: 630,
-      background: "linear-gradient(135deg, #0d0d0d 0%, #171717 50%, #0d0d0d 100%)",
+      background: "#ffffff",
       fontFamily: "Inter, system-ui, -apple-system, sans-serif",
-      color: "#fafafa", display: "flex", flexDirection: "column", padding: "48px 56px", overflow: "hidden",
+      color: "#0d0d0d", display: "flex", overflow: "hidden",
     }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 40 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 10, background: "#fff", color: "#0d0d0d", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 16 }}>UI</div>
-          <span style={{ fontWeight: 600, fontSize: 22 }}>UIScore</span>
-        </div>
-        <span style={{ color: "#737373", fontSize: 16, fontFamily: "monospace" }}>{host}</span>
+      {/* Left: Screenshot */}
+      <div style={{ width: 580, height: 630, flexShrink: 0, position: "relative", background: "#f5f5f5" }}>
+        {screenshotBase64 && (
+          <img src={screenshotBase64} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top left" }} />
+        )}
+        {/* Gradient overlay on right edge for blend */}
+        <div style={{ position: "absolute", top: 0, right: 0, width: 80, height: "100%", background: "linear-gradient(to right, transparent, #ffffff)" }} />
       </div>
-      <div style={{ display: "flex", flex: 1, gap: 56 }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minWidth: 220 }}>
-          <svg viewBox="0 0 200 200" width="180" height="180">
-            <circle cx="100" cy="100" r="80" fill="none" stroke="#262626" strokeWidth="5" />
-            <circle cx="100" cy="100" r="80" fill="none" stroke={color} strokeWidth="5" strokeLinecap="round"
-              strokeDasharray={2 * Math.PI * 80} strokeDashoffset={2 * Math.PI * 80 - (results.overall / 100) * 2 * Math.PI * 80}
-              transform="rotate(-90 100 100)" />
-            <text x="100" y="92" textAnchor="middle" dominantBaseline="central" fill={color} fontSize="56" fontWeight="600" fontFamily="Inter, system-ui, sans-serif">{results.overall}</text>
-            <text x="100" y="128" textAnchor="middle" fill="#a3a3a3" fontSize="16" fontFamily="Inter, system-ui, sans-serif">{getScoreLabel(results.overall)}</text>
-          </svg>
+
+      {/* Right: Score + details */}
+      <div style={{ flex: 1, padding: "44px 48px 44px 24px", display: "flex", flexDirection: "column" }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 32 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: "#171717", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12 }}>UI</div>
+          <span style={{ fontWeight: 600, fontSize: 16, color: "#171717" }}>UIScore</span>
+          <span style={{ marginLeft: "auto", color: "#a3a3a3", fontSize: 13, fontFamily: "monospace" }}>{host}</span>
         </div>
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 16 }}>
+
+        {/* Score */}
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <div style={{ fontSize: 72, fontWeight: 600, lineHeight: 1, color }}>{results.overall}</div>
+          <div style={{ fontSize: 14, color: "#a3a3a3", marginTop: 4 }}>{getScoreLabel(results.overall)}</div>
+        </div>
+
+        {/* Category bars */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
           {cats.map(([name, data]) => {
             const meta = CATEGORY_META[name];
             const barColor = getScoreColor(data.score, 20);
             const barPct = (data.score / 20) * 100;
             return (
-              <div key={name} style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                <span style={{ width: 110, fontSize: 15, color: "#d4d4d4", fontWeight: 500 }}>{meta.icon} {meta.label}</span>
-                <div style={{ flex: 1, height: 8, backgroundColor: "#262626", borderRadius: 4, overflow: "hidden" }}>
-                  <div style={{ height: "100%", width: `${barPct}%`, backgroundColor: barColor, borderRadius: 4 }} />
+              <div key={name} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ width: 85, fontSize: 13, color: "#737373", fontWeight: 500 }}>{meta.label}</span>
+                <div style={{ flex: 1, height: 6, backgroundColor: "#f5f5f5", borderRadius: 3, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${barPct}%`, backgroundColor: barColor, borderRadius: 3 }} />
                 </div>
-                <span style={{ width: 55, textAlign: "right", fontFamily: "monospace", fontWeight: 600, fontSize: 15, color: barColor }}>{data.score}/20</span>
+                <span style={{ width: 40, textAlign: "right", fontFamily: "monospace", fontWeight: 600, fontSize: 13, color: barColor }}>{data.score}</span>
               </div>
             );
           })}
         </div>
+
+        {/* Footer */}
+        <div style={{ borderTop: "1px solid #f0f0f0", marginTop: 20, paddingTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <p style={{ color: "#a3a3a3", fontSize: 12, maxWidth: 350, lineHeight: 1.5, margin: 0, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const }}>{results.summary}</p>
+          <span style={{ color: "#171717", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>uiscore.vercel.app</span>
+        </div>
       </div>
-      <div style={{ borderTop: "1px solid #262626", marginTop: 32, paddingTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <p style={{ color: "#a3a3a3", fontSize: 14, maxWidth: 700, lineHeight: 1.5, margin: 0 }}>{results.summary}</p>
-        <span style={{ color: "#ffffff", fontSize: 14, fontWeight: 600, whiteSpace: "nowrap" }}>uiscore.vercel.app</span>
+    </div>
+  );
+}
+
+// --- Share Card: Compare (hidden, for LinkedIn image export) ---
+function CompareShareCard({
+  site1, site2, url1, url2, screenshot1Base64, screenshot2Base64, cardRef,
+}: {
+  site1: AnalysisResult; site2: AnalysisResult; url1: string; url2: string;
+  screenshot1Base64: string | null; screenshot2Base64: string | null;
+  cardRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const color1 = getScoreColor(site1.overall);
+  const color2 = getScoreColor(site2.overall);
+  const winner = site1.overall > site2.overall ? 1 : site2.overall > site1.overall ? 2 : 0;
+
+  return (
+    <div ref={cardRef} style={{
+      position: "absolute", left: "-9999px", top: 0, width: 1200, height: 630,
+      background: "#ffffff",
+      fontFamily: "Inter, system-ui, -apple-system, sans-serif",
+      color: "#0d0d0d", display: "flex", flexDirection: "column", padding: "40px 48px", overflow: "hidden",
+    }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 28 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: "#171717", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 12 }}>UI</div>
+          <span style={{ fontWeight: 600, fontSize: 16 }}>UIScore</span>
+        </div>
+        <span style={{ color: "#a3a3a3", fontSize: 13 }}>Design Comparison</span>
+      </div>
+
+      {/* Two sites */}
+      <div style={{ display: "flex", gap: 32, flex: 1 }}>
+        {/* Site 1 */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <div style={{ height: 280, borderRadius: 12, overflow: "hidden", background: "#f5f5f5", marginBottom: 16, border: winner === 1 ? "2px solid #171717" : "1px solid #e5e5e5" }}>
+            {screenshot1Base64 && <img src={screenshot1Base64} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
+            <span style={{ fontSize: 40, fontWeight: 600, color: color1, lineHeight: 1 }}>{site1.overall}</span>
+            <div>
+              <div style={{ fontFamily: "monospace", fontSize: 13, color: "#737373" }}>{hostname(url1)}</div>
+              <div style={{ fontSize: 12, color: "#a3a3a3" }}>{getScoreLabel(site1.overall)}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* VS divider */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, width: 40 }}>
+          <span style={{ fontSize: 16, fontWeight: 700, color: "#d4d4d4" }}>vs</span>
+        </div>
+
+        {/* Site 2 */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <div style={{ height: 280, borderRadius: 12, overflow: "hidden", background: "#f5f5f5", marginBottom: 16, border: winner === 2 ? "2px solid #171717" : "1px solid #e5e5e5" }}>
+            {screenshot2Base64 && <img src={screenshot2Base64} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }} />}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
+            <span style={{ fontSize: 40, fontWeight: 600, color: color2, lineHeight: 1 }}>{site2.overall}</span>
+            <div>
+              <div style={{ fontFamily: "monospace", fontSize: 13, color: "#737373" }}>{hostname(url2)}</div>
+              <div style={{ fontSize: 12, color: "#a3a3a3" }}>{getScoreLabel(site2.overall)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{ borderTop: "1px solid #f0f0f0", marginTop: 16, paddingTop: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ color: "#a3a3a3", fontSize: 12 }}>
+          {winner > 0
+            ? `${winner === 1 ? hostname(url1) : hostname(url2)} wins by ${Math.abs(site1.overall - site2.overall)} points`
+            : `Tied at ${site1.overall}`}
+        </span>
+        <span style={{ color: "#171717", fontSize: 12, fontWeight: 600 }}>uiscore.vercel.app</span>
       </div>
     </div>
   );
@@ -243,7 +329,11 @@ export default function Home() {
   const [shareStatus, setShareStatus] = useState("");
   const [promptCopied, setPromptCopied] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [screenshotB64, setScreenshotB64] = useState<string | null>(null);
+  const [screenshot1B64, setScreenshot1B64] = useState<string | null>(null);
+  const [screenshot2B64, setScreenshot2B64] = useState<string | null>(null);
   const shareCardRef = useRef<HTMLDivElement>(null);
+  const compareCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (state !== "loading") return;
@@ -264,6 +354,19 @@ export default function Home() {
     setShowPrompt(false);
   }, [state]);
 
+  // Convert an image URL to base64 data URL (avoids CORS issues with html-to-image)
+  const toBase64 = async (imgUrl: string): Promise<string | null> => {
+    try {
+      const res = await fetch(imgUrl);
+      const blob = await res.blob();
+      return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+    } catch { return null; }
+  };
+
   const analyze = useCallback(async () => {
     if (!url.trim()) return;
     setState("loading");
@@ -280,6 +383,8 @@ export default function Home() {
       setResults(data);
       setState("results");
       track("analysis_completed", { url: hostname(url.trim()), score: data.overall });
+      // Convert screenshot to base64 in background for share card
+      if (data.screenshotUrl) toBase64(data.screenshotUrl).then(setScreenshotB64);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setState("error");
@@ -302,6 +407,9 @@ export default function Home() {
       setCompareResults(data);
       setState("results");
       track("comparison_completed", { url1: hostname(url1.trim()), url2: hostname(url2.trim()) });
+      // Convert both screenshots in background for share card
+      if (data.site1.screenshotUrl) toBase64(data.site1.screenshotUrl).then(setScreenshot1B64);
+      if (data.site2.screenshotUrl) toBase64(data.site2.screenshotUrl).then(setScreenshot2B64);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setState("error");
@@ -323,6 +431,9 @@ export default function Home() {
     setUrl1("");
     setUrl2("");
     setError("");
+    setScreenshotB64(null);
+    setScreenshot1B64(null);
+    setScreenshot2B64(null);
   };
 
   const generateScorecardImage = async (): Promise<string | null> => {
@@ -372,13 +483,43 @@ export default function Home() {
     setTimeout(() => setShareStatus(""), 5000);
   };
 
-  const shareCompareOnLinkedIn = () => {
+  const generateCompareImage = async (): Promise<string | null> => {
+    if (!compareCardRef.current) return null;
+    const { toPng } = await import("html-to-image");
+    try {
+      return await Promise.race([
+        toPng(compareCardRef.current, { quality: 0.95, pixelRatio: 2, width: 1200, height: 630 }),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
+      ]);
+    } catch (err) {
+      console.error("Failed to generate compare image:", err);
+      return null;
+    }
+  };
+
+  const shareCompareOnLinkedIn = async () => {
     if (!compareResults) return;
     const h1 = hostname(url1);
     const h2 = hostname(url2);
     const winner = compareResults.site1.overall >= compareResults.site2.overall ? h1 : h2;
     const text = `I compared ${h1} (${compareResults.site1.overall}/100) vs ${h2} (${compareResults.site2.overall}/100) on UIScore.\n\nWinner: ${winner}\n\nCompare any two websites: https://uiscore.vercel.app`;
     window.open(`https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(text)}`, "_blank");
+    setShareStatus("Downloading comparison card...");
+    try {
+      const dataUrl = await generateCompareImage();
+      if (dataUrl) {
+        const link = document.createElement("a");
+        link.download = `uiscore-${h1}-vs-${h2}.png`;
+        link.href = dataUrl;
+        link.click();
+        setShareStatus("Comparison card downloaded! Attach it to your LinkedIn post.");
+      } else {
+        setShareStatus("");
+      }
+    } catch {
+      setShareStatus("");
+    }
+    setTimeout(() => setShareStatus(""), 5000);
   };
 
   const generatePrompt = (): string => {
@@ -531,7 +672,7 @@ export default function Home() {
         {/* ============ SCORE RESULTS ============ */}
         {state === "results" && !isCompareMode && results && (
           <div>
-            <ShareCard results={results} siteUrl={url} cardRef={shareCardRef} />
+            <ShareCard results={results} siteUrl={url} screenshotBase64={screenshotB64} cardRef={shareCardRef} />
 
             {/* Screenshot */}
             {results.screenshotUrl && (
@@ -683,6 +824,12 @@ export default function Home() {
         {/* ============ COMPARE RESULTS ============ */}
         {state === "results" && isCompareMode && compareResults && (
           <div className="animate-fade-in">
+            <CompareShareCard
+              site1={compareResults.site1} site2={compareResults.site2}
+              url1={url1} url2={url2}
+              screenshot1Base64={screenshot1B64} screenshot2Base64={screenshot2B64}
+              cardRef={compareCardRef}
+            />
             {/* Screenshots side by side */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 mb-10">
               {compareResults.site1.screenshotUrl && (
@@ -749,10 +896,16 @@ export default function Home() {
 
             {/* Share */}
             <div className="flex items-center justify-center gap-3 pt-6 border-t border-neutral-100 opacity-0 animate-slide-up" style={{ animationDelay: "650ms", animationFillMode: "forwards" }}>
+              <button onClick={async () => { const d = await generateCompareImage(); if (d) { const l = document.createElement("a"); l.download = `uiscore-compare.png`; l.href = d; l.click(); } }}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-neutral-400 hover:text-neutral-700 hover:bg-neutral-50 transition-colors">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                Download
+              </button>
               <button onClick={shareCompareOnLinkedIn} className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-neutral-900 text-white text-sm font-medium hover:bg-neutral-700 transition-colors">
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
                 Share on LinkedIn
               </button>
+              {shareStatus && <p className="text-xs text-neutral-500 ml-2 animate-fade-in">{shareStatus}</p>}
             </div>
           </div>
         )}
