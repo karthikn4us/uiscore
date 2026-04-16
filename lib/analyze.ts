@@ -1,6 +1,6 @@
 import type { AnalysisResult } from "./types";
 
-export const ANALYSIS_PROMPT = `Analyze this website screenshot as a senior UI/UX designer. Score each category from 0 to 20 and provide exactly 2 specific, actionable feedback items per category.
+export const ANALYSIS_PROMPT = `Analyze this website screenshot as a senior UI/UX designer. Score each category from 0 to 20 and provide exactly 2 specific, actionable feedback items per category. Also extract the visible design system tokens.
 
 Return ONLY valid JSON with this exact structure (no markdown, no explanation):
 {
@@ -14,7 +14,16 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanation):
   },
   "summary": "<one sentence overall impression>",
   "topStrength": "<the single best design aspect>",
-  "topImprovement": "<the single most impactful thing to fix>"
+  "topImprovement": "<the single most impactful thing to fix>",
+  "designSystem": {
+    "colors": [
+      { "hex": "<hex color code>", "usage": "<where/how this color is used>" }
+    ],
+    "fonts": [
+      { "family": "<font family name>", "usage": "<where this font is used>" }
+    ],
+    "observations": ["<design system observation>", "<design system observation>"]
+  }
 }
 
 Scoring guide:
@@ -23,6 +32,11 @@ Scoring guide:
 - Spacing (0-20): Padding/margin rhythm, whitespace usage, element grouping/proximity, content density
 - Layout (0-20): Visual hierarchy, alignment and grid usage, information flow, content organization
 - Polish (0-20): Attention to detail, cross-element consistency, use of modern patterns, professional finish
+
+Design system extraction guide:
+- Colors: Extract 4-6 dominant colors visible in the screenshot. Include background, text, primary accent, secondary accent, and any other notable colors. Provide exact hex codes.
+- Fonts: Identify 1-3 font families visible (heading font, body font, monospace if present). Best-guess the font family name.
+- Observations: Provide 2-3 observations about the design system's consistency (e.g. spacing scale, number of font sizes, color palette cohesion, component patterns).
 
 Be honest, specific, and reference actual elements visible in the screenshot. Avoid generic feedback.`;
 
@@ -64,7 +78,7 @@ export async function analyzeWithClaude(screenshotBase64: string): Promise<strin
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
+      max_tokens: 1500,
       messages: [
         {
           role: "user",

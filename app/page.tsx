@@ -564,8 +564,62 @@ export default function Home() {
               <CategoryBreakdown results={results} animated={animated} />
             </div>
 
+            {/* Design System */}
+            {results.designSystem && (
+              <div className="mb-8 opacity-0 animate-slide-up" style={{ animationDelay: "500ms", animationFillMode: "forwards" }}>
+                <p className="text-[11px] tracking-wide uppercase text-neutral-300 mb-4">Design System</p>
+                <div className="bg-neutral-50 rounded-2xl p-6">
+                  {/* Colors */}
+                  {results.designSystem.colors.length > 0 && (
+                    <div className="mb-6">
+                      <p className="text-xs font-medium text-neutral-500 mb-3">Colors</p>
+                      <div className="flex flex-wrap gap-4">
+                        {results.designSystem.colors.map((c, i) => (
+                          <div key={i} className="flex flex-col items-center gap-1.5">
+                            <div
+                              className="w-10 h-10 rounded-full border border-neutral-200/60 shadow-sm"
+                              style={{ backgroundColor: c.hex }}
+                            />
+                            <span className="text-[10px] font-mono text-neutral-500">{c.hex}</span>
+                            <span className="text-[10px] text-neutral-400 max-w-[80px] text-center leading-tight">{c.usage}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Fonts */}
+                  {results.designSystem.fonts.length > 0 && (
+                    <div className={results.designSystem.observations.length > 0 ? "mb-6" : ""}>
+                      <p className="text-xs font-medium text-neutral-500 mb-3">Typography</p>
+                      <div className="flex flex-wrap gap-x-8 gap-y-2">
+                        {results.designSystem.fonts.map((f, i) => (
+                          <div key={i} className="flex items-baseline gap-2">
+                            <span className="text-sm font-medium text-neutral-800">{f.family}</span>
+                            <span className="text-xs text-neutral-400">{f.usage}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Observations */}
+                  {results.designSystem.observations.length > 0 && (
+                    <div>
+                      <p className="text-xs font-medium text-neutral-500 mb-2">Notes</p>
+                      <div className="space-y-1">
+                        {results.designSystem.observations.map((obs, i) => (
+                          <p key={i} className="text-xs text-neutral-400 leading-relaxed">{obs}</p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Claude Code prompt */}
-            <div className="opacity-0 animate-slide-up" style={{ animationDelay: "550ms", animationFillMode: "forwards" }}>
+            <div className="opacity-0 animate-slide-up" style={{ animationDelay: "650ms", animationFillMode: "forwards" }}>
               <div className="flex items-center justify-between py-4">
                 <span className="text-sm text-neutral-400">Fix these issues automatically</span>
                 <div className="flex items-center gap-2">
@@ -587,7 +641,7 @@ export default function Home() {
             </div>
 
             {/* Share */}
-            <div className="flex items-center justify-center gap-3 pt-6 border-t border-neutral-100 opacity-0 animate-slide-up" style={{ animationDelay: "650ms", animationFillMode: "forwards" }}>
+            <div className="flex items-center justify-center gap-3 pt-6 border-t border-neutral-100 opacity-0 animate-slide-up" style={{ animationDelay: "750ms", animationFillMode: "forwards" }}>
               <button onClick={downloadScorecard} className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm text-neutral-400 hover:text-neutral-700 hover:bg-neutral-50 transition-colors">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
                 Download

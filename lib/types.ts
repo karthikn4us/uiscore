@@ -3,6 +3,12 @@ export interface CategoryResult {
   feedback: string[];
 }
 
+export interface DesignSystem {
+  colors: { hex: string; usage: string }[];
+  fonts: { family: string; usage: string }[];
+  observations: string[];
+}
+
 export interface AnalysisResult {
   overall: number;
   categories: {
@@ -16,6 +22,7 @@ export interface AnalysisResult {
   topStrength: string;
   topImprovement: string;
   screenshotUrl?: string;
+  designSystem?: DesignSystem;
 }
 
 export interface CompareResult {
