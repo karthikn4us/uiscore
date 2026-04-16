@@ -41,16 +41,20 @@ Design system extraction guide:
 - Fonts: Identify 1-3 font families visible (heading font, body font, monospace if present). Best-guess the font family name.
 - Observations: Provide 2-3 observations about the design system's consistency (e.g. spacing scale, number of font sizes, color palette cohesion, component patterns).
 
-CSS fixes guide (CRITICAL - follow these rules exactly):
-- Generate 3-5 CSS fixes that address the most visually impactful issues you identified.
+CSS fixes guide (CRITICAL - follow EVERY rule below. Violations will break the site):
+- Generate 3-5 CSS fixes that address spacing, typography, and layout issues ONLY.
 - Each fix MUST be a valid, self-contained CSS rule that can be injected as a <style> tag.
 - ALWAYS use !important on every property to override existing styles.
-- Target broad, standard selectors: body, h1, h2, h3, h4, h5, h6, p, a, nav, main, section, footer, header, button, img, ul, li, div, span.
-- You can also use attribute selectors like [class*="hero"], [class*="nav"], [class*="header"], [class*="footer"], [class*="btn"], [class*="card"].
-- Focus on high-impact visual changes: font-size, font-weight, line-height, letter-spacing, padding, margin, gap, color, background-color, border-radius, max-width, opacity.
-- Do NOT use @media queries, @keyframes, or JavaScript. Only simple CSS rules.
-- Do NOT use overly specific selectors that won't match. Keep selectors simple and broad.
-- Each CSS rule should be on a single line. Example: "h1 { font-size: 3.5rem !important; font-weight: 700 !important; line-height: 1.1 !important; }"
+- ABSOLUTELY NEVER change: color, background-color, background, border-color, fill, stroke, box-shadow, text-shadow, outline-color, or ANY color-related property. You MUST preserve the site's existing color scheme exactly as-is.
+- ABSOLUTELY NEVER add colored backgrounds, colored borders, or colored text to any element.
+- ONLY modify these safe properties: font-size, font-weight, line-height, letter-spacing, padding, margin, gap, border-radius, max-width, width, text-align.
+- Target broad selectors: body, h1, h2, h3, h4, h5, h6, p, a, nav, main, section, footer, header, button.
+- Do NOT use @media queries, @keyframes, JavaScript, or attribute selectors.
+- The goal is SUBTLE refinement, not a redesign. The "after" should look like the same site but slightly more polished.
+- Example good fix: "h1 { font-size: 3.2rem !important; line-height: 1.15 !important; letter-spacing: -0.02em !important; }"
+- Example good fix: "section { padding: 4rem 2rem !important; }"
+- Example BAD fix (NEVER do this): "button { background-color: green !important; }"
+- Example BAD fix (NEVER do this): "nav { background: #f0f0f0 !important; }"
 
 Be honest, specific, and reference actual elements visible in the screenshot. Avoid generic feedback.`;
 
