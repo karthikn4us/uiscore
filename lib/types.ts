@@ -9,6 +9,11 @@ export interface DesignSystem {
   observations: string[];
 }
 
+export interface CssFix {
+  description: string;
+  css: string;
+}
+
 export interface AnalysisResult {
   overall: number;
   categories: {
@@ -23,6 +28,8 @@ export interface AnalysisResult {
   topImprovement: string;
   screenshotUrl?: string;
   designSystem?: DesignSystem;
+  cssFixes?: CssFix[];
+  fixedScreenshotUrl?: string;
 }
 
 export interface CompareResult {

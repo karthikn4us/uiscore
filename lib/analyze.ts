@@ -1,6 +1,6 @@
-import type { AnalysisResult } from "./types";
+import type { AnalysisResult, CssFix } from "./types";
 
-export const ANALYSIS_PROMPT = `Analyze this website screenshot as a senior UI/UX designer. Score each category from 0 to 20 and provide exactly 2 specific, actionable feedback items per category. Also extract the visible design system tokens.
+export const ANALYSIS_PROMPT = `Analyze this website screenshot as a senior UI/UX designer. Score each category from 0 to 20 and provide exactly 2 specific, actionable feedback items per category. Also extract the visible design system tokens and generate CSS fixes.
 
 Return ONLY valid JSON with this exact structure (no markdown, no explanation):
 {
@@ -23,7 +23,10 @@ Return ONLY valid JSON with this exact structure (no markdown, no explanation):
       { "family": "<font family name>", "usage": "<where this font is used>" }
     ],
     "observations": ["<design system observation>", "<design system observation>"]
-  }
+  },
+  "cssFixes": [
+    { "description": "<what this CSS change fixes>", "css": "<valid CSS rule with !important>" }
+  ]
 }
 
 Scoring guide:
@@ -37,6 +40,17 @@ Design system extraction guide:
 - Colors: Extract 4-6 dominant colors visible in the screenshot. Include background, text, primary accent, secondary accent, and any other notable colors. Provide exact hex codes.
 - Fonts: Identify 1-3 font families visible (heading font, body font, monospace if present). Best-guess the font family name.
 - Observations: Provide 2-3 observations about the design system's consistency (e.g. spacing scale, number of font sizes, color palette cohesion, component patterns).
+
+CSS fixes guide (CRITICAL - follow these rules exactly):
+- Generate 3-5 CSS fixes that address the most visually impactful issues you identified.
+- Each fix MUST be a valid, self-contained CSS rule that can be injected as a <style> tag.
+- ALWAYS use !important on every property to override existing styles.
+- Target broad, standard selectors: body, h1, h2, h3, h4, h5, h6, p, a, nav, main, section, footer, header, button, img, ul, li, div, span.
+- You can also use attribute selectors like [class*="hero"], [class*="nav"], [class*="header"], [class*="footer"], [class*="btn"], [class*="card"].
+- Focus on high-impact visual changes: font-size, font-weight, line-height, letter-spacing, padding, margin, gap, color, background-color, border-radius, max-width, opacity.
+- Do NOT use @media queries, @keyframes, or JavaScript. Only simple CSS rules.
+- Do NOT use overly specific selectors that won't match. Keep selectors simple and broad.
+- Each CSS rule should be on a single line. Example: "h1 { font-size: 3.5rem !important; font-weight: 700 !important; line-height: 1.1 !important; }"
 
 Be honest, specific, and reference actual elements visible in the screenshot. Avoid generic feedback.`;
 
@@ -68,6 +82,27 @@ export async function getScreenshot(url: string): Promise<ScreenshotResult> {
   return { base64, url: screenshotUrl };
 }
 
+/** Take a screenshot with CSS fixes injected via Microlink's styles param */
+export async function getFixedScreenshot(url: string, cssFixes: CssFix[]): Promise<string> {
+  const combinedCss = cssFixes.map((f) => f.css).join(" ");
+  const apiUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&screenshot.width=1280&screenshot.height=800&screenshot.type=png&waitForTimeout=5000&waitUntil=networkidle0&styles=${encodeURIComponent(combinedCss)}`;
+
+  const response = await fetch(apiUrl, { signal: AbortSignal.timeout(30000) });
+
+  if (!response.ok) {
+    throw new Error(`Microlink fixed screenshot returned ${response.status}`);
+  }
+
+  const data = await response.json();
+  const screenshotUrl = data?.data?.screenshot?.url;
+
+  if (!screenshotUrl) {
+    throw new Error("No fixed screenshot URL in response");
+  }
+
+  return screenshotUrl;
+}
+
 export async function analyzeWithClaude(screenshotBase64: string): Promise<string> {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -78,7 +113,7 @@ export async function analyzeWithClaude(screenshotBase64: string): Promise<strin
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 1500,
+      max_tokens: 2000,
       messages: [
         {
           role: "user",
@@ -137,10 +172,27 @@ export function parseAndClampAnalysis(responseText: string): AnalysisResult {
   return analysis as AnalysisResult;
 }
 
-/** Full pipeline: screenshot -> Claude -> parsed result */
+/** Full pipeline: screenshot -> Claude -> parsed result -> fixed screenshot */
 export async function analyzeUrl(url: string): Promise<AnalysisResult & { screenshotUrl: string }> {
   const screenshot = await getScreenshot(url);
   const responseText = await analyzeWithClaude(screenshot.base64);
   const analysis = parseAndClampAnalysis(responseText);
-  return { ...analysis, screenshotUrl: screenshot.url };
+
+  const result: AnalysisResult & { screenshotUrl: string } = {
+    ...analysis,
+    screenshotUrl: screenshot.url,
+  };
+
+  // Generate "after" screenshot with CSS fixes injected
+  if (analysis.cssFixes && analysis.cssFixes.length > 0) {
+    try {
+      const fixedUrl = await getFixedScreenshot(url, analysis.cssFixes);
+      result.fixedScreenshotUrl = fixedUrl;
+    } catch (err) {
+      // Fixed screenshot failed - continue without it (graceful degradation)
+      console.error("Fixed screenshot failed:", err);
+    }
+  }
+
+  return result;
 }

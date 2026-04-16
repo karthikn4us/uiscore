@@ -243,6 +243,8 @@ export default function Home() {
   const [shareStatus, setShareStatus] = useState("");
   const [promptCopied, setPromptCopied] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [showAfter, setShowAfter] = useState(true);
+  const [showFixes, setShowFixes] = useState(false);
   const shareCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -262,6 +264,8 @@ export default function Home() {
     }
     setAnimated(false);
     setShowPrompt(false);
+    setShowAfter(true);
+    setShowFixes(false);
   }, [state]);
 
   const analyze = useCallback(async () => {
@@ -533,10 +537,60 @@ export default function Home() {
           <div>
             <ShareCard results={results} siteUrl={url} cardRef={shareCardRef} />
 
-            {/* Screenshot */}
+            {/* Before/After Screenshot */}
             {results.screenshotUrl && (
               <div className="mt-6 mb-8 max-w-2xl mx-auto opacity-0 animate-slide-up" style={{ animationDelay: "0ms", animationFillMode: "forwards" }}>
-                <ScreenshotFrame src={results.screenshotUrl} alt={hostname(url)} />
+                {/* Toggle (only if we have a fixed screenshot) */}
+                {results.fixedScreenshotUrl && (
+                  <div className="flex items-center justify-center mb-3">
+                    <div className="flex items-center gap-1 bg-neutral-100 rounded-full p-0.5">
+                      <button onClick={() => setShowAfter(false)}
+                        className={`px-3.5 py-1 rounded-full text-xs font-medium transition-all ${!showAfter ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}>
+                        Before
+                      </button>
+                      <button onClick={() => setShowAfter(true)}
+                        className={`px-3.5 py-1 rounded-full text-xs font-medium transition-all ${showAfter ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}>
+                        After
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <div className="relative">
+                  {/* Before screenshot */}
+                  <div className={`transition-opacity duration-300 ${results.fixedScreenshotUrl && showAfter ? "opacity-0 absolute inset-0" : "opacity-100"}`}>
+                    <ScreenshotFrame src={results.screenshotUrl} alt={hostname(url)} />
+                  </div>
+                  {/* After screenshot */}
+                  {results.fixedScreenshotUrl && (
+                    <div className={`transition-opacity duration-300 ${showAfter ? "opacity-100" : "opacity-0 absolute inset-0"}`}>
+                      <ScreenshotFrame src={results.fixedScreenshotUrl} alt={`${hostname(url)} (with fixes)`} />
+                    </div>
+                  )}
+                </div>
+                {/* Applied fixes toggle */}
+                {results.cssFixes && results.cssFixes.length > 0 && (
+                  <div className="mt-3">
+                    <button onClick={() => setShowFixes(!showFixes)}
+                      className="text-xs text-neutral-400 hover:text-neutral-600 transition-colors flex items-center gap-1 mx-auto">
+                      <svg className={`w-3 h-3 transition-transform ${showFixes ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                      </svg>
+                      {results.cssFixes.length} CSS fixes applied
+                    </button>
+                    {showFixes && (
+                      <div className="mt-3 space-y-2 animate-fade-in">
+                        {results.cssFixes.map((fix, i) => (
+                          <div key={i} className="bg-neutral-50 rounded-xl px-4 py-3">
+                            <p className="text-xs text-neutral-600 mb-1.5">{fix.description}</p>
+                            <code className="text-[11px] text-neutral-400 font-mono block bg-white rounded-lg px-3 py-2 border border-neutral-100 overflow-x-auto">
+                              {fix.css}
+                            </code>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
